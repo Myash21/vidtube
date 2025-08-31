@@ -1,0 +1,30 @@
+{
+  "name": "vidtube",
+  "version": "1.0.0",
+  "description": "A project inspired by youtube",
+  "keywords": [
+    "backend",
+    "node",
+    "express",
+    "mongoose"
+  ],
+  "homepage": "https://github.com/Myash21/vidtube#readme",
+  "bugs": {
+    "url": "https://github.com/Myash21/vidtube/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Myash21/vidtube.git"
+  },
+  "license": "ISC",
+  "author": "Yash Mhaskar",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2"
+  }
+}
