@@ -15,4 +15,10 @@ app.use(express.json({limit: "16kb"})) //allows parsing of incoming requests wit
 app.use(express.urlencoded({extended:true, limit:"16kb"})) // parses URL-encoded data
 app.use(express.static("public")) //This serves static files from the public folder
 
+//import routes
+import healtcheckRouter from "./routes/healthcheck.routes.js"
+
+//routes
+app.use("/api/v1/healthcheck", healtcheckRouter)
+
 export { app }
