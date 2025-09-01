@@ -13,13 +13,12 @@
 */
 
 import mongoose, { Schema } from "mongoose";
-import { User } from "./user.models";
 
-export const videoSchema = new Schema(
+const videoSchema = new Schema(
     {
         owner: {
             type: Schema.Types.ObjectId,
-            ref: User
+            ref: "User"
         },
         videoFile: {
             type: String, //cloudinary url

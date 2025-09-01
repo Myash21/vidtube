@@ -9,14 +9,12 @@
 */
 
 import mongoose, { Schema } from "mongoose";
-import { User } from "./user.models";
-import { Video } from "./video.models";
 
-export const playlistSchema = new Schema(
+const playlistSchema = new Schema(
     {
         owner: {
             type: Schema.Types.ObjectId,
-            ref: User
+            ref: "User"
         },
         name: {
             type: String,
@@ -29,7 +27,7 @@ export const playlistSchema = new Schema(
         videos: [
             {
                 type: Schema.Types.ObjectId,
-                ref: Video
+                ref: "Video"
             }
         ]
     },
