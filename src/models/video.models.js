@@ -55,6 +55,6 @@ const videoSchema = new Schema(
 videoSchema.plugin(mongooseAggregatePaginate)
 
 export const Video = mongoose.model("Video", videoSchema) 
-/*creates a table/document in the mongodb database
- names user and having the structure defined in userSchema
+/*creates a document in the mongodb database 
+having the structure defined in userSchema
 */
