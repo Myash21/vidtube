@@ -15,7 +15,7 @@
 import mongoose, { Schema } from "mongoose";
 import { User } from "./user.models";
 
-const videoSchema = new Schema(
+export const videoSchema = new Schema(
     {
         owner: {
             type: Schema.Types.ObjectId,
