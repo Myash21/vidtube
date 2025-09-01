@@ -14,6 +14,9 @@
 
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
+dotenv.config()
 
 const userSchema = new Schema(
     {
@@ -71,7 +74,21 @@ userSchema.pre("save", async function(next){ //Here we are using a prehook which
 })
 
 userSchema.methods.isPasswordCorrect = async function(password){
-    return bcrypt.compare(password, this.password)
+    return await bcrypt.compare(password, this.password)
+}
+
+const secret = process.env.JWT_SECRET_ACCESS_TOKEN
+const time = process.env.JWT_SECRET_EXPIRY_TIME
+userSchema.methods.generateAccessToken = function(){ //Generating an access token using jwt which is used to validate that the user has successfully logged in
+    //short lived access token (user can remain logged in for a short amount of time)
+    var token = jwt.sign(           //jwt.sign(data, secret, expiresin)
+        { 
+            _id: this._id,
+            email: this.email,
+            username: this.username 
+        },
+         secret,
+        {expiresIn: time});
 }
 
 export const User = mongoose.model("User", userSchema) 
