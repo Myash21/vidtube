@@ -77,8 +77,8 @@ userSchema.methods.isPasswordCorrect = async function(password){
     return await bcrypt.compare(password, this.password)
 }
 
-const secret = process.env.JWT_SECRET_ACCESS_TOKEN
-const time = process.env.JWT_SECRET_EXPIRY_TIME
+const access_secret = process.env.JWT_SECRET_ACCESS_TOKEN
+const access_time = process.env.ACCESS_TOKEN_EXPIRY_TIME
 userSchema.methods.generateAccessToken = function(){ //Generating an access token using jwt which is used to validate that the user has successfully logged in
     //short lived access token (user can remain logged in for a short amount of time)
     var token = jwt.sign(           //jwt.sign(data, secret, expiresin)
@@ -87,8 +87,20 @@ userSchema.methods.generateAccessToken = function(){ //Generating an access toke
             email: this.email,
             username: this.username 
         },
-         secret,
-        {expiresIn: time});
+         access_secret,
+        {expiresIn: access_time});
+}
+
+const refresh_secret = process.env.JWT_SECRET_REFRESH_TOKEN
+const refresh_time = process.env.REFRESH_TOKEN_EXPIRY_TIME
+//An access token grants temporary, limited access to a resource, while a refresh token is a long-lived token used to obtain a new access token when the old one expires
+userSchema.methods.generateRefreshToken = function(){
+    var token = jwt.sign(           //jwt.sign(data, secret, expiresin)
+        { 
+            _id: this._id
+        },
+         refresh_secret,
+        {expiresIn: refresh_time});
 }
 
 export const User = mongoose.model("User", userSchema) 
