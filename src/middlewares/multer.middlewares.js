@@ -1,5 +1,7 @@
+//For handling file uploads
 import multer from "multer";
 
+//For storing files to disk i.e. local storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './public/temp')
