@@ -1,53 +1,49 @@
 import { v2 as cloudinary } from 'cloudinary';
-import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
+import dotenv from "dotenv"
+import fs from 'fs'
+dotenv.config()
 
-dotenv.config();
 
-const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
-
-// Surface misconfig early
-if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-  console.error('[Cloudinary] Missing env vars:',
-    { CLOUDINARY_CLOUD_NAME: !!CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY: !!CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET: !!CLOUDINARY_API_SECRET }
-  );
-}
-
-cloudinary.config({
-  cloud_name: CLOUDINARY_CLOUD_NAME,
-  api_key: CLOUDINARY_API_KEY,
-  api_secret: CLOUDINARY_API_SECRET,
-  secure: true, // use https URLs
+console.log(process.env.CLOUDINARY_CLOUD_NAME)
+console.log(process.env.CLOUDINARY_API_KEY)
+console.log(process.env.CLOUDINARY_API_SECRET)
+//cloudinary config
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+    api_key: process.env.CLOUDINARY_API_KEY, 
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-export const uploadOnCloudinary = async (localFilePath, options = {}) => {
-  if (!localFilePath) {
-    console.error('[Cloudinary] upload called without a file path');
-    return null;
-  }
-
-  const absolutePath = path.resolve(localFilePath);
-
-  try {
-    const res = await cloudinary.uploader.upload(absolutePath, {
-      resource_type: 'auto',
-      ...options, // e.g., { folder: 'avatars' }
-    });
-    // Prefer secure_url
-    console.log('[Cloudinary] Uploaded:', { public_id: res.public_id, secure_url: res.secure_url });
-    return res;
-  } catch (err) {
-    // SHOW the actual error
-    console.error('[Cloudinary] Upload error:', err?.message || err);
-    // Re-throw so controller can react
-    throw err;
-  } finally {
-    // Always attempt to clean temp file
+export const uploadOnCloudinary = async (localfilepath) => {
     try {
-      fs.unlinkSync(absolutePath);
-    } catch (unlinkErr) {
-      // ignore missing file errors
+        if(!localfilepath) {
+            console.log("local file path not found by uploadOnCloudinary function")
+            return null
+        }
+        const response = await cloudinary.uploader.upload(
+            localfilepath, {
+                resource_type: "auto"
+            }
+        )
+        console.log("File uploaded on Cloudinary! File src: " + response.url)
+        //Once the file is uploaded, we would like to delete it from our local server
+        fs.unlinkSync(localfilepath)
+        return response
+    } 
+    catch (error) {
+        //If an error occurs while uploading we would like to remove it from our local server too
+        console.log("error occured in cloudinary.js")
+        fs.unlinkSync(localfilepath)
+        return null
     }
-  }
-};
+}
+
+export const deleteFromCloudinary = async(publicId) => {
+    try {
+        const result = await cloudinary.uploader.destroy(publicId)
+        console.log("deleted from cloudinary", publicId)
+    } catch (error) {
+        console.log("Error deleting from cloudinary!", error)
+        return null
+    }
+}
