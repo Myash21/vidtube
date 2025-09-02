@@ -67,7 +67,7 @@ const userSchema = new Schema(
 )
 
 userSchema.pre("save", async function(next){ //Here we are using a prehook which is middleware used to process the data before saving it to the database, in this case we are encrypting the password before saving it to the database
-    if(!this.modified("password")) return next() //We only need this hashing logic to run when only the password field is being saved the first time or being modified in the database
+    if(!this.isModified("password")) return next() //We only need this hashing logic to run when only the password field is being saved the first time or being modified in the database
 
     this.password = bcrypt.hash(this.password, 10)
     next()
