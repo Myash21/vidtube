@@ -4,6 +4,27 @@ import { User } from "../models/user.models.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
+//Generate access and refresh token for a user
+export const generateAcessAndRefresh = async(userId) => {
+    try {
+        //check if user exists
+        const user = await User.findById(userId)
+        if(!user){
+            throw new ApiError(404, "User not found")
+        }
+        //generate access and refresh tokens
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+    
+        //store refresh token with the user as we have created a refresh token field in the user schema
+        user.refreshToken = refreshToken
+        await user.save({validateBeforeSave: false})
+        return {accessToken, refreshToken}
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating access and refresh tokens!")
+    }
+}
+
 export const registerUser = asyncHandler(async(req, res) => {
     //get the details from the request body
     const {fullname, username, email, password} = req.body
@@ -21,7 +42,7 @@ export const registerUser = asyncHandler(async(req, res) => {
     }
     
     //storing image files in the database
-    console.log(req.files)
+    //console.log(req.files)
     const avatarLocalPath = req.files?.avatar?.[0]?.path;
     const coverLocalPath  = req.files?.coverImage?.[0]?.path;
 
