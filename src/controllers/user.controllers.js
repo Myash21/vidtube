@@ -219,3 +219,9 @@ export const refreshAccessToken = asyncHandler(async(req, res) => {
         throw new ApiError(500, "Something went wrong while refreshing access token!")
     }
 })
+
+export const logoutUser = asyncHandler(async(req, res) => {
+    await User.findByIdAndUpdate(
+        //TODO
+    )
+})
