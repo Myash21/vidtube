@@ -3,6 +3,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.models.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
+dotenv.config()
 
 //Generate access and refresh token for a user
 export const generateAccessAndRefresh = async(userId) => {
@@ -160,4 +163,59 @@ export const loginUser = asyncHandler(async(req, res) => {
             {user: loggedInUser, accessToken, refreshToken}, //In mobile app we cannot set the cookies, so sending the tokens here
             "User login successfull!"
         ))
+})
+
+/*
+Access tokens (JWTs) are usually short-lived (e.g., 15 minutes – 1 hour) which limits damage if a token is stolen.
+But if access tokens expire too fast, users would need to log in again and again — not good UX.
+So we use refresh token to generate new access and refresh tokens
+
+Example Flow
+User logs in → gets accessToken (15min) + refreshToken (7d).
+Access token expires.
+Client calls /refresh with refresh token.
+Server verifies refresh token, issues new access+refresh.
+User continues without re-login.
+*/
+export const refreshAccessToken = asyncHandler(async(req, res) => {
+    //Get the refresh token from the request
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    if(!incomingRefreshToken){
+        throw new ApiError(401, "Refesh Token is required!")
+    }
+    try {
+        //Use the refresh token secret to validate refresh token and ensure it isn't expired
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
+
+        //Makes sure the refresh token corresponds to a real user
+        const user = await User.findById(decodedToken?._id)
+        if(!user){
+            throw new ApiError(401, "Invalid refresh token!")
+        }
+        //Ensure the refresh token presented is the latest one issued from the database
+        if(incomingRefreshToken != user?.refreshToken){
+            throw new ApiError(401, "Invalid refresh token!")
+        }
+
+        const options = {
+        httpOnly: true, //client cannot access the cookie
+        secure: process.env.NODE_ENV === "production" //Ensures cookies can only be sent over HTTPS connections, when NODE_ENV is production, secure: true, but allows us to test on localhost
+    }
+
+    //generate new access and refresh tokens and store refresh in database
+    const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefresh(user._id)
+
+    //send back tokens to client
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(new ApiResponse(
+            200, 
+            {accessToken, refreshToken: newRefreshToken}, 
+            "Access Token refreshed successfully"
+        ))
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while refreshing access token!")
+    }
 })
