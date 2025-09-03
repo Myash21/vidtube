@@ -5,7 +5,7 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js
 import { ApiResponse } from "../utils/apiResponse.js";
 
 //Generate access and refresh token for a user
-export const generateAcessAndRefresh = async(userId) => {
+export const generateAccessAndRefresh = async(userId) => {
     try {
         //check if user exists
         const user = await User.findById(userId)
@@ -110,4 +110,54 @@ export const registerUser = asyncHandler(async(req, res) => {
         }
         throw new ApiError(500, "Something went wrong while registering user and images were deleted!")
     }
+})
+
+
+export const loginUser = asyncHandler(async(req, res) => {
+    //get data from request body
+    const {email, username, password} = req.body
+
+    //validation
+    if(!password || (!email && !username)){
+        throw new ApiError(400, "Some fields are missing")
+    }
+
+    //verify user is registered
+    const existingUser = await User.findOne({$or: [{username}, {email}]})
+    if(!existingUser){
+        throw new ApiError(404, "User not registered!")
+    }
+
+    //validate password
+    const isPasswordValid = await existingUser.isPasswordCorrect(password)
+    if(!isPasswordValid){
+        throw new ApiError(401, "Unauthorized!")
+    }
+
+    //generate access and refresh token
+    const {accessToken, refreshToken} = await generateAccessAndRefresh(existingUser._id)
+
+    //return the data of the logged in user except password and refresh token
+    const loggedInUser = await User.findById(existingUser._id).select("-password -refreshToken")
+
+    //check if user logged in
+    if(!loggedInUser){
+        throw new ApiError(500, "User not logged in!")
+    }
+
+    //options are cookie flags you pass to res.cookie() in Express, control how the browser stores and handles the cookie
+    const options = {
+        httpOnly: true, //client cannot access the cookie
+        secure: process.env.NODE_ENV === "production" //Ensures cookies can only be sent over HTTPS connections, when NODE_ENV is production, secure: true, but allows us to test on localhost
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(
+            200, 
+            {user: loggedInUser, accessToken, refreshToken}, //In mobile app we cannot set the cookies, so sending the tokens here
+            "User login successfull!"
+        ))
 })
