@@ -28,6 +28,7 @@ export const generateAccessAndRefresh = async(userId) => {
     }
 }
 
+//Register new user
 export const registerUser = asyncHandler(async(req, res) => {
     //get the details from the request body
     const {fullname, username, email, password} = req.body
@@ -115,7 +116,7 @@ export const registerUser = asyncHandler(async(req, res) => {
     }
 })
 
-
+//Login the user
 export const loginUser = asyncHandler(async(req, res) => {
     //get data from request body
     const {email, username, password} = req.body
@@ -220,8 +221,24 @@ export const refreshAccessToken = asyncHandler(async(req, res) => {
     }
 })
 
+//Logout the user by effectively removing the refresh token from the database and clearing the cookies
 export const logoutUser = asyncHandler(async(req, res) => {
     await User.findByIdAndUpdate(
-        //TODO
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined 
+            }
+        },
+        {new: true}
     )
+    const options = {
+        httpOnly: true, //client cannot access the cookie
+        secure: process.env.NODE_ENV === "production"
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("rccessToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully!"))
 })
