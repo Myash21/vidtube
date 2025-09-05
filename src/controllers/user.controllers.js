@@ -324,4 +324,30 @@ export const updateAvatar = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {user}, "Avatar updated successfully"))
 })
 
-export const updateCoverImage = asyncHandler(async(req, res) => {})
+export const updateCoverImage = asyncHandler(async(req, res) => {
+    const coverLocalPath = req?.file?.path
+    if(!coverLocalPath){
+        throw new ApiError(400, "Cover file missing!")
+    }
+
+    let cover
+    try {
+        cover = await uploadOnCloudinary(coverLocalPath)
+        console.log("Cover uploaded on cloudinary!")
+    } catch (error) {
+        console.log("Failed to upload Cover")
+        throw new ApiError(500, "Failed to upload Cover on cloudinary!")
+    }
+
+    const user = await User.findById(req?.user?.id).select("-password -refreshToken")
+    if(!user){
+        throw new ApiError(404, "User not found!")
+    }
+    
+    user.cover = cover.url
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {user}, "Cover updated successfully"))    
+})
