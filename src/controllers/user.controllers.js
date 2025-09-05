@@ -257,7 +257,7 @@ export const changeCurrentPassword = asyncHandler(async(req, res) => {
     }
 
     user.password = newPassword //the new password is automatically encrypted before being updated as we have defined middleware(check line 69, user.models.js)
-    user.save({validateBeforeSave: false})
+    await user.save({validateBeforeSave: false})
 
     return res
     .status(200)
@@ -268,7 +268,30 @@ export const getCurrentUser = asyncHandler(async() => {
     return res.status(200).json(new ApiResponse(200, req.user, "Current user details!"))
 })
 
-export const updateAccountDetails = asyncHandler(async() => {})
+//Allow user to update one or more details
+export const updateAccountDetails = asyncHandler(async(req, res) => {
+    const {fullname, username} = req.body
+
+    //validate request body
+    if(!fullname && !username){
+        throw new ApiError(400, "At least one field (fullname or username) is required!")
+    }
+
+    //find user
+    const user = await User.findById(req.user._id).select("-password -refreshToken")
+    if(!user){
+        throw new ApiError(404, "User not found!")
+    }
+    
+    //update fields and save
+    if (username) user.username = username
+    if (fullname) user.fullname = fullname
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {user}, "details updated successfully!"))
+})
 
 export const updateAvatar = asyncHandler(async() => {})
 
