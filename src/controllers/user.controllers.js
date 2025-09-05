@@ -249,6 +249,9 @@ export const changeCurrentPassword = asyncHandler(async(req, res) => {
 
     //we can get id as we are updating the req through middleware
     const user = await User.findById(req?.user?._id)
+    if(!user){
+        throw new ApiError(404, "User not found!")
+    }
 
     //verify old password
     const isPasswordValid = await user.isPasswordCorrect(oldPassword)
@@ -293,6 +296,32 @@ export const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {user}, "details updated successfully!"))
 })
 
-export const updateAvatar = asyncHandler(async() => {})
+export const updateAvatar = asyncHandler(async(req, res) => {
+    const avatarLocalPath = req?.file?.path
+    if(!avatarLocalPath){
+        throw new ApiError(400, "Avatar file missing!")
+    }
 
-export const updateCoverImage = asyncHandler(async() => {})
+    let avatar
+    try {
+        avatar = await uploadOnCloudinary(avatarLocalPath)
+        console.log("Avatar uploaded on cloudinary!")
+    } catch (error) {
+        console.log("Failed to upload Avatar")
+        throw new ApiError(500, "Failed to upload Avatar on cloudinary!")
+    }
+
+    const user = await User.findById(req?.user?.id).select("-password -refreshToken")
+    if(!user){
+        throw new ApiError(404, "User not found!")
+    }
+    
+    user.avatar = avatar.url
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {user}, "Avatar updated successfully"))
+})
+
+export const updateCoverImage = asyncHandler(async(req, res) => {})
