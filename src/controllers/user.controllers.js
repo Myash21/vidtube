@@ -243,14 +243,31 @@ export const logoutUser = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "User logged out successfully!"))
 })
 
-export const changeCurrentPassword = asyncHandler((req, res) => {
+//change password
+export const changeCurrentPassword = asyncHandler(async(req, res) => {
+    const {oldPassword, newPassword} = req.body;
 
+    //we can get id as we are updating the req through middleware
+    const user = await User.findById(req?.user?._id)
+
+    //verify old password
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword)
+    if(!isPasswordValid){
+        throw new ApiError(401, "Incorrect old Password!")
+    }
+
+    user.password = newPassword //the new password is automatically encrypted before being updated as we have defined middleware(check line 69, user.models.js)
+    user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password updated successfully!"))
 })
 
-export const getCurrentUser = asyncHandler(() => {})
+export const getCurrentUser = asyncHandler(async() => {})
 
-export const updateAccountDetails = asyncHandler(() => {})
+export const updateAccountDetails = asyncHandler(async() => {})
 
-export const updateAvatar = asyncHandler(() => {})
+export const updateAvatar = asyncHandler(async() => {})
 
-export const updateCoverImage = asyncHandler(() => {})
+export const updateCoverImage = asyncHandler(async() => {})
