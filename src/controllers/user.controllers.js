@@ -242,3 +242,15 @@ export const logoutUser = asyncHandler(async(req, res) => {
     .clearCookie("rccessToken", options)
     .json(new ApiResponse(200, {}, "User logged out successfully!"))
 })
+
+export const changeCurrentPassword = asyncHandler((req, res) => {
+
+})
+
+export const getCurrentUser = asyncHandler(() => {})
+
+export const updateAccountDetails = asyncHandler(() => {})
+
+export const updateAvatar = asyncHandler(() => {})
+
+export const updateCoverImage = asyncHandler(() => {})
