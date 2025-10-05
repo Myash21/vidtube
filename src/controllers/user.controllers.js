@@ -240,7 +240,7 @@ export const logoutUser = asyncHandler(async(req, res) => {
     return res
     .status(200)
     .clearCookie("accessToken", options)
-    .clearCookie("rccessToken", options)
+    .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out successfully!"))
 })
 
@@ -268,7 +268,7 @@ export const changeCurrentPassword = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, {}, "Password updated successfully!"))
 })
 
-export const getCurrentUser = asyncHandler(async() => {
+export const getCurrentUser = asyncHandler(async(req, res) => {
     return res.status(200).json(new ApiResponse(200, req.user, "Current user details!"))
 })
 
@@ -345,7 +345,7 @@ export const updateCoverImage = asyncHandler(async(req, res) => {
         throw new ApiError(404, "User not found!")
     }
     
-    user.cover = cover.url
+    user.coverImage = cover.url
     await user.save({validateBeforeSave: false})
 
     return res
@@ -380,7 +380,7 @@ export const getUserChannelProfile = asyncHandler(async(req, res) => {
             },
             {
                 $lookup: {
-                    from: "subscription",
+                    from: "subscriptions",
                     localField: "_id",
                     foreignField: "subscriber",
                     as: "subscriptions"
@@ -426,7 +426,7 @@ export const getUserChannelProfile = asyncHandler(async(req, res) => {
 })
 
 export const getWatchHistory = asyncHandler(async(req, res) => {
-    const user = User.aggregate([
+    const user = await User.aggregate([
         {
             $match: {
                 _id: new Mongoose.Types.ObjectId(req.user?._id)
