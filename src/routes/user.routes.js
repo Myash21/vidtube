@@ -25,7 +25,7 @@ router.route("/register").post( //.post(middleware, controller)
 router.route("/login").post(loginUser)
 router.route("/refresh-token").post(refreshAccessToken)
 
-//secured routes
+//secured routes (user must be logged in to access these routes, we verify that using the verifyJWT middleware)
 router.route("/logout").post(verifyJWT, logoutUser) //.post(middleware, controller)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/current-user").get(verifyJWT, getCurrentUser)
