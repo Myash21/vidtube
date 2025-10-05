@@ -91,6 +91,10 @@ src/
     └── cloudinary.js         # File upload utilities
 ```
 
+## Database Structure
+
+![Vidtube Database Structure](https://res.cloudinary.com/dk2edznkx/image/upload/v1759648050/diagram-export-10-5-2025-12_37_13-PM_vb2hn1.png)
+
 ## 🚀 Getting Started
 
 ### Prerequisites
