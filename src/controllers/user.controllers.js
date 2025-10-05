@@ -19,10 +19,6 @@ const generateAccessAndRefresh = async(userId) => {
         //generate access and refresh tokens
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
-    
-        //store refresh token with the user as we have created a refresh token field in the user schema
-        user.refreshToken = refreshToken
-        await user.save({validateBeforeSave: false})
         return {accessToken, refreshToken}
     } catch (error) {
         throw new ApiError(500, "Something went wrong while generating access and refresh tokens!")
@@ -88,7 +84,7 @@ export const registerUser = asyncHandler(async(req, res) => {
             fullname,
             avatar: avatar.url,
             coverImage: coverImage?.url || "",
-            username: username.toLowerCase(),
+            username: username,
             email,
             password
         })
@@ -141,6 +137,7 @@ export const loginUser = asyncHandler(async(req, res) => {
 
     //generate access and refresh token
     const {accessToken, refreshToken} = await generateAccessAndRefresh(existingUser._id)
+    await User.findByIdAndUpdate(existingUser._id, { $set: { refreshToken } }, { new: true })
 
     //return the data of the logged in user except password and refresh token
     const loggedInUser = await User.findById(existingUser._id).select("-password -refreshToken")
@@ -189,25 +186,25 @@ export const refreshAccessToken = asyncHandler(async(req, res) => {
         //Use the refresh token secret to validate refresh token and ensure it isn't expired
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.JWT_SECRET_REFRESH_TOKEN)
 
-        //Makes sure the refresh token corresponds to a real user
-        const user = await User.findById(decodedToken?._id)
-        if(!user){
-            throw new ApiError(401, "Invalid refresh token!")
-        }
-        //Ensure the refresh token presented is the latest one issued from the database
-        if(incomingRefreshToken != user?.refreshToken){
-            throw new ApiError(401, "Invalid refresh token!")
-        }
-
+        //Makes sure the refresh token corresponds to a real user and atomically rotate token
         const options = {
         httpOnly: true, //client cannot access the cookie
         secure: process.env.NODE_ENV === "production" //Ensures cookies can only be sent over HTTPS connections, when NODE_ENV is production, secure: true, but allows us to test on localhost
     }
 
-    //generate new access and refresh tokens and store refresh in database
-    const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefresh(user._id)
+    //generate new access and refresh tokens
+    const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefresh(decodedToken?._id)
 
-    //send back tokens to client
+    //conditionally rotate the refresh token in DB using CAS
+    const updatedUser = await User.findOneAndUpdate(
+        { _id: decodedToken?._id, refreshToken: incomingRefreshToken },
+        { $set: { refreshToken: newRefreshToken } },
+        { new: true }
+    )
+    if(!updatedUser){
+        throw new ApiError(401, "Invalid refresh token!")
+    }
+
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -367,7 +364,7 @@ export const getUserChannelProfile = asyncHandler(async(req, res) => {
         [
             {
                 $match: {
-                    username: username?.toLowerCase()
+                    username: username
                 }
             },
             {

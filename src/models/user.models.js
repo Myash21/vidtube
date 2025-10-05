@@ -69,7 +69,7 @@ const userSchema = new Schema(
 userSchema.pre("save", async function(next){ //Here we are using a prehook which is middleware used to process the data before saving it to the database, in this case we are encrypting the password before saving it to the database
     if(!this.isModified("password")) return next() //We only need this hashing logic to run when only the password field is being saved the first time or being modified in the database
 
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
@@ -89,6 +89,7 @@ userSchema.methods.generateAccessToken = function(){ //Generating an access toke
         },
          access_secret,
         {expiresIn: access_time});
+        return token
 }
 
 const refresh_secret = process.env.JWT_SECRET_REFRESH_TOKEN
@@ -101,6 +102,7 @@ userSchema.methods.generateRefreshToken = function(){
         },
          refresh_secret,
         {expiresIn: refresh_time});
+    return token
 }
 
 export const User = mongoose.model("User", userSchema) 
