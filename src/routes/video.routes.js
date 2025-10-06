@@ -6,7 +6,7 @@ import { deleteVideo, getAllVideos, getVideoById, publishAVideo, updateVideo } f
 const router = Router()
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
-router.route("/").get(getAllVideos)
+router.route("/getAll").get(getAllVideos)
 
 router.route("/register-video").post(
     upload.fields([

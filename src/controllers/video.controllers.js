@@ -3,7 +3,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Video } from "../models/video.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import dotenv from "dotenv"
-import { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 dotenv.config()
 
@@ -11,6 +11,9 @@ export const getVideoById = asyncHandler(async(req, res) => {
     const { videoId } = req.params
     if(!videoId){
         throw new ApiError(400, "video id is missing!")
+    }
+    if(!mongoose.isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!")
     }
     const video = await Video.findById(videoId)
     if(!video){
@@ -84,14 +87,17 @@ export const publishAVideo = asyncHandler(async(req, res) => {
 })
 
 export const updateVideo = asyncHandler(async(req, res) => {
-    const { title, description } = req.body
-    const thumbnailLocalPath = req?.file?.path
+    const { title, description } = req.body || {}
+    const thumbnailLocalPath = req.file?.path
     if(!title && !description && !thumbnailLocalPath){
-        throw new ApiError(401, "Atleast one field is required!")
+        throw new ApiError(400, "Atleast one field is required!")
     }
     const { videoId } = req.params
     if(!videoId){
         throw new ApiError(400, "videoId missing!")
+    }
+    if(!mongoose.isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!")
     }
     const video = await Video.findById(videoId)
     if(!video){
