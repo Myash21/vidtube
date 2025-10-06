@@ -30,3 +30,5 @@ router.route("/update-videoinfo/:videoId").patch(
 )
 
 router.route("/delete-video/:videoId").delete(deleteVideo)
+
+export default router;

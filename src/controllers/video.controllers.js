@@ -1,10 +1,10 @@
-import { ApiError } from "../utils/apiError";
-import { ApiResponse } from "../utils/apiResponse";
-import { Video } from "../models/video.models";
-import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/apiError.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { Video } from "../models/video.models.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import dotenv from "dotenv"
 import { Mongoose } from "mongoose";
-import { uploadOnCloudinary } from "../utils/cloudinary";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 dotenv.config()
 
 export const getVideoById = asyncHandler(async(req, res) => {
