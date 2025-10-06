@@ -152,3 +152,41 @@ export const deleteVideo = asyncHandler(async(req, res) => {
     .status(204)
     .json(new ApiResponse(204, {}, "Video deleted successfully"))
 })
+
+export const getAllVideos = asyncHandler(async(req, res) => {
+    const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
+    const match = {}
+    if(query){
+        match.$or = [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ]
+    }
+    if(userId){
+        match.owner = userId
+    }
+    match.isPublished = true
+    const sort = {}
+    if(sortBy){
+        sort[sortBy] = String(sortType).toLowerCase() === "asc" ? 1 : -1
+    }
+    const aggregation = Video.aggregate([
+        { $match: match },
+        { $sort: sort }
+    ])
+    const options = {
+        page: Number(page) || 1,
+        limit: Number(limit) || 10
+    }
+    const result = await Video.aggregatePaginate(aggregation, options)
+    return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Videos fetched successfully"))
+})
+/*
+Example requests:
+Fetch latest: GET /api/v1/videos?Page=1&limit=10
+Search: GET /api/v1/videos?query=react
+Sort by views asc: GET /api/v1/videos?sortBy=views&sortType=asc
+By owner: GET /api/v1/videos?userId=<userId>
+*/
