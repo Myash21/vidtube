@@ -120,3 +120,35 @@ export const updateVideo = asyncHandler(async(req, res) => {
     .status(200)
     .json(new ApiResponse(200, {video}, "Updated information successfully!"))
 })
+
+export const deleteVideo = asyncHandler(async(req, res) => {
+    const { videoId } = req.params
+    if(!videoId){
+        throw new ApiError(400, "Missing video Id!")
+    }
+
+    //Verifying video with given Id exists
+    let video
+    try{
+        video = await Video.findById(videoId)
+    }
+    catch(error){
+        throw new ApiError(400, "Invalid video Id!")
+    }
+    if(!video){
+        throw new ApiError(404, "Video not found!")
+    }
+
+    //Delete video
+    try{
+        await Video.findByIdAndDelete(videoId)
+        console.log("Video deleted successfully!")
+    }
+    catch(error){
+        console.log("Something went wrong while trying to delete video")
+        throw new ApiError(500, "Something went wrong while trying to delete video")
+    }
+    return res
+    .status(204)
+    .json(new ApiResponse(204, {}, "Video deleted successfully"))
+})
