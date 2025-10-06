@@ -86,6 +86,30 @@ export const publishAVideo = asyncHandler(async(req, res) => {
     }
 })
 
+export const togglePublishStatus = asyncHandler(async(req, res) => {
+    const { videoId } = req.params
+    if(!videoId){
+        throw new ApiError(400, "video id is missing!")
+    }
+    if(!mongoose.isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!")
+    }
+    const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, "Video not found!")
+    }
+    if(video.isPublished === true){
+        video.isPublished = false
+    }
+    else{
+        video.isPublished = true
+    }
+    await video.save({validateBeforeSave: false})
+    return res
+    .status(200)
+    .json(new ApiResponse(200, video.isPublished, "Video Publish status updated!"))
+})
+
 export const updateVideo = asyncHandler(async(req, res) => {
     const { title, description } = req.body || {}
     const thumbnailLocalPath = req.file?.path
