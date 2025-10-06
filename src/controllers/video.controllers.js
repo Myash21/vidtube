@@ -13,6 +13,9 @@ export const getVideoById = asyncHandler(async(req, res) => {
         throw new ApiError(400, "video id is missing!")
     }
     const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, "Video not found!")
+    }
     return res
     .status(200)
     .json(new ApiResponse(200, video, "video information fetched successfully!"))
