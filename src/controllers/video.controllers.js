@@ -70,7 +70,8 @@ export const publishAVideo = asyncHandler(async(req, res) => {
             thumbnail: thumbnail.url,
             title: title,
             description: description,
-            duration: duration
+            duration: duration,
+            isPublished: true
         })
         return res
         .status(201)
@@ -80,4 +81,42 @@ export const publishAVideo = asyncHandler(async(req, res) => {
         console.log("Failed to register video!")
         throw new ApiError(500, "Something went wrong when registering video!")
     }
+})
+
+export const updateVideo = asyncHandler(async(req, res) => {
+    const { title, description } = req.body
+    const thumbnailLocalPath = req?.file?.path
+    if(!title && !description && !thumbnailLocalPath){
+        throw new ApiError(401, "Atleast one field is required!")
+    }
+    const { videoId } = req.params
+    if(!videoId){
+        throw new ApiError(400, "videoId missing!")
+    }
+    const video = await Video.findById(videoId)
+    if(!video){
+        throw new ApiError(404, "Video not found!")
+    }
+    if(title){
+        video.title = title
+    }
+    if(description){
+        video.description = description
+    }
+    if(thumbnailLocalPath){
+        let thumbnail
+        try{
+            thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+            console.log("Uploaded thumbnail on cloudinary!")
+        }
+        catch(error){
+            console.log("Failed to upload thumbnail on cloudinary!")
+            throw new ApiError(500, "Failed to upload thumbnail on cloudinary!")
+        }
+        video.thumbnail = thumbnail.url
+    }
+    await video.save({validateBeforeSave: false})
+    return res
+    .status(200)
+    .json(new ApiResponse(200, {video}, "Updated information successfully!"))
 })

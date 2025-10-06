@@ -18,11 +18,13 @@ app.use(express.static("public")) //This serves static files from the public fol
 app.use(cookieParser())
 
 //import routes
-import healtcheckRouter from "./routes/healthcheck.routes.js"
+import healthcheckRouter from "./routes/healthcheck.routes.js"
 import userRouter from "./routes/user.routes.js"
+import videoRouter from "./routes/video.routes.js"
 
 //routes
-app.use("/api/v1/healthcheck", healtcheckRouter)
+app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/videos", videoRouter)
 
 export { app }
